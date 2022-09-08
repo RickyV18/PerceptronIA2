@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<script src="myperceptron.js"></script>
+<script src="myplotlib.js"></script>
+<script src="myailib.js"></script>
+<body>
+<canvas id="myCanvas" width="400px" height="400px" style="width:100%;max-width:400px;border:1px solid black"></canvas>
+<button onclick="perception()">perception</button>
+<button onclick="train()">train</button>
+<div id="demo"></div>
+<script>
+// Initiate Values
+const learningRate = 0.9;
+const xPoints = [];
+const yPoints = [];
+
+// Create a Plotter
+const plotter = new XYPlotter("myCanvas");
+plotter.transformXY();
+const xMax = plotter.xMax;
+const yMax = plotter.yMax;
+const xMin = plotter.xMin;
+const yMin = plotter.yMin;
+var desired = [];
+var fx = 0;
+var linex0 = 0;
+var liney0 = 0;
+var linex = 0;
+var liney = 0;
+
+function getCursorPosition(canvas, event) {
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = yMax - (event.clientY - rect.left)
+    xPoints.push(x);
+  	yPoints.push(y);
+    plotter.plotPoint(x, y, "orange");
+
+
+}
+
+const canvas = document.querySelector('canvas')
+canvas.addEventListener('mousedown', function(e) {
+    getCursorPosition(canvas, e)
+})
+
+// Line Function
+function f(x) {
+    console.log(x * 1.2 + 50);
+  return fx;
+}
+
+function checkPoint () {
+    for (let i = 0; i < xPoints.length; i++) {
+        // move line end and point so that line start is at 0,0
+        px = xPoints[i];
+        py = yPoints[i];
+        linex -= linex0;
+        liney -= liney0;
+        px -= linex;
+        py -= liney;
+
+        // get cross product
+        var cross = linex * py - liney * px;
+        console.log('====================================');
+        console.log("cross", cross);
+        console.log('====================================');
+        if(cross < 0){ desired[i] = 1;
+        }else if(cross > 0){ desired[i] = 0;
+        }
+    }
+
+    console.log(desired);
+}
+
+
+
+
+
+// Create a Perceptron
+const ptron = new Perceptron(2, learningRate);
+
+
+function perception () {
+    checkPoint();
+    // Train the Perceptron
+for (let j = 0; j <= 1000; j++) {
+  for (let i = 0; i < xPoints.length; i++) {
+    ptron.train([xPoints[i], yPoints[i]], desired[i]);
+  }
+}
+// Display the Result
+for (let i = 0; i < xPoints.length; i++) {
+  const x = xPoints[i];
+  const y = yPoints[i];
+  let guess = ptron.activate([x, y, ptron.bias]);
+  console.log(guess);
+  let color = "black";
+  if (guess == 0) color = "blue";
+  plotter.plotPoint(x, y, color);
+}
+}
+
+function train () {
+let myTrainer = new Trainer(xPoints, yPoints);
+	myTrainer.train(1000);
+  // Display Guessed Results
+  document.getElementById("demo").innerHTML = 
+  "<p>Slope: " + myTrainer.weight.toFixed(2) + "</p>" +
+  "<p>Bias:  " + myTrainer.bias.toFixed(2) + "</p>" +
+  "<p>Cost:  " + myTrainer.cost.toFixed(2);
+    console.log('====================================');
+    liney0 = myTrainer.bias;
+    linex = xMax;
+    liney = xMax*(myTrainer.weight)+(myTrainer.bias);
+    console.log(xMax*(myTrainer.weight)+(myTrainer.bias));
+    console.log('====================================');
+  plotter.plotLine(0, myTrainer.bias, xMax, xMax*(myTrainer.weight)+(myTrainer.bias), "black");
+}
+
+
+
+
+</script>
+</body>
+</html>
